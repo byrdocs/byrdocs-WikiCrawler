@@ -13,17 +13,22 @@ std::string wiki::view(const std::string &url){
 	request.perform();
 	return response.str();
 }
-nlohmann::json wiki::query_all(const std::string &query_prefix,const std::string &mergekey,const std::string &continuekey){
+nlohmann::json wiki::query_all(const std::string &query_prefix,const std::string &continuekey,const std::vector<std::string> &merge_key_series){
 	nlohmann::json result,current=nlohmann::json::parse(wiki::view(std::format(
 		"{}&format=json&formatrevision=2",
 		query_prefix
 	)));
 	while(true){
-		for(auto item:current["query"][mergekey])
+		const bool ending=current.find("continue")==current.end();
+		std::string continuevalue{};
+		if(!ending)
+			continuevalue=current["continue"][continuekey];
+		for(const auto &key:merge_key_series)
+			current=current[key];
+		for(const auto &item:current)
 			result.push_back(item);
-		if(current.find("continue")==current.end())
+		if(ending)
 			break;
-		std::string continuevalue=current["continue"][continuekey];
 		current=nlohmann::json::parse(wiki::view(std::format(
 				"{}&format=json&formatrevision=2&{}={}",
 				query_prefix,
