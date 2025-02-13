@@ -1,5 +1,6 @@
 #include<cassert>
 #include<exception>
+#include<format>
 #include<iostream>
 #include<sstream>
 #include<string>
@@ -7,7 +8,8 @@
 #include"wikibot.hpp"
 int main(){
 	try{
-		std::string raw{wiki::view("http://localhost/api.php?format=json&action=query&pageids=1")};
+		std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("wikitoken"))};
+		std::string raw{wiki::view("https://wiki.byrdocs.org/api.php?format=json&action=query&pageids=1",header)};
 		nlohmann::json j=nlohmann::json::parse(raw);
 		nlohmann::json expectation{
 			{"batchcomplete",""},

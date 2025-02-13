@@ -1,3 +1,5 @@
+#include<cstdlib>
+#include<format>
 #include<iostream>
 #include<sstream>
 #include<string>
@@ -14,13 +16,17 @@ R"(:'''此页面'''仅供 ''API'' 进行测试，请勿轻易修改其中内容�
 
 * [[首页|Main]])"};
 	try{
-		std::string result{wiki::view("localhost:80/index.php?title=用户:大量更改机器人/沙盒/Api_View&action=raw")};
+		std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("wikitoken"))};
+		std::string result{wiki::view("https://wiki.byrdocs.org/index.php?title=用户:大量更改机器人/沙盒/Api_View&action=raw",header)};
 		std::clog<<result<<std::endl;
 		assert(expectation==result);
-	}catch(curlpp::RuntimeError &e){
+	}catch(const curlpp::RuntimeError &e){
 		std::cout<<e.what()<<std::endl;
 		assert(false);
-	}catch(curlpp::LogicError &e){
+	}catch(const curlpp::LogicError &e){
+		std::cout<<e.what()<<std::endl;
+		assert(false);
+	}catch(const std::exception &e){
 		std::cout<<e.what()<<std::endl;
 		assert(false);
 	}

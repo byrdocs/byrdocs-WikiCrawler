@@ -6,22 +6,23 @@
 #include<nlohmann/json.hpp>
 #include"wikibot.hpp"
 int main(){
+	std::ofstream jsonout{"./wiki.json"};
 	try{
-		std::ofstream jsonout{"./wiki.json"};
 		if(!jsonout.is_open())
 			throw std::runtime_error{"Cannot open wiki.json!"};
-		nlohmann::json allpages=wiki::query_all("http://wiki.byrdocs.org/api.php?action=query&list=allpages","apcontinue",{"query","allpages"});
+		const std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("wikitoken"))};
+		nlohmann::json allpages=wiki::query_all("https://wiki.byrdocs.org/api.php?action=query&list=allpages","apcontinue",{"query","allpages"},header);
 		nlohmann::json wikijson;
 		for(const auto &item:allpages){
 			const std::string pageid=nlohmann::to_string(item["pageid"]);
 			const std::string title=nlohmann::json::parse(wiki::view(std::format(
-				"http://wiki.byrdocs.org/api.php?format=json&action=query&pageids={}",
+				"https://wiki.byrdocs.org/api.php?format=json&action=query&pageids={}",
 				pageid
-			)))["query"]["pages"][pageid]["title"];
+			),header))["query"]["pages"][pageid]["title"];
 			nlohmann::json categories=wiki::query_all(std::format(
-				"http://wiki.byrdocs.org/api.php?action=query&prop=categories&&pageids={}",
+				"https://wiki.byrdocs.org/api.php?action=query&prop=categories&&pageids={}",
 				pageid
-			),"clcontinue",{"query","pages",pageid,"categories"});
+			),"clcontinue",{"query","pages",pageid,"categories"},header);
 			nlohmann::json wikipage{
 				{"url",std::format("https://wiki.byrdocs.org/w/{}",title)},
 				{"type","test"},
@@ -63,16 +64,16 @@ int main(){
 					wikipage["data"]["course"]["name"]=info.substr(7);
 			}
 			const std::string page_content=wiki::view(std::format(
-				"http://wiki.byrdocs.org/index.php?title={}&action=raw",
+				"https://wiki.byrdocs.org/index.php?title={}&action=raw",
 				title
-			));
+			),header);
 			const auto source_idx=page_content.find("{{来源|");
 			if(source_idx!=std::string::npos)
 				wikipage+={"id",page_content.substr(source_idx+9,32)};
-			wikijson+=wikipage;
+			if(wikipage["data"]["course"]["name"]!="")
+				wikijson+=wikipage;
 		}
 		jsonout<<wikijson;
-		jsonout.close();
 	}catch(const curlpp::RuntimeError &e){
 		std::cerr<<e.what()<<std::endl;
 	}catch(const curlpp::LogicError &e){
@@ -80,5 +81,6 @@ int main(){
 	}catch(const std::exception &e){
 		std::cerr<<e.what()<<std::endl;
 	}
+	jsonout.close();
 	return 0;
 }
