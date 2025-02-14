@@ -10,6 +10,7 @@ int main(){
 	try{
 		if(!jsonout.is_open())
 			throw std::runtime_error{"Cannot open wiki.json!"};
+		std::clog<<"Opened wiki.json..."<<std::endl;
 		const std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("wikitoken"))};
 		nlohmann::json allpages=wiki::query_all("https://wiki.byrdocs.org/api.php?action=query&list=allpages","apcontinue",{"query","allpages"},header);
 		nlohmann::json wikijson;
@@ -19,6 +20,7 @@ int main(){
 				"https://wiki.byrdocs.org/api.php?format=json&action=query&pageids={}",
 				pageid
 			),header))["query"]["pages"][pageid]["title"];
+			std::clog<<std::format("Started processing {}... ",title);
 			nlohmann::json categories=wiki::query_all(std::format(
 				"https://wiki.byrdocs.org/api.php?action=query&prop=categories&&pageids={}",
 				pageid
@@ -72,8 +74,10 @@ int main(){
 				wikipage+={"id",page_content.substr(source_idx+9,32)};
 			if(wikipage["data"]["course"]["name"]!="")
 				wikijson+=wikipage;
+			std::clog<<"Added."<<std::endl;
 		}
 		jsonout<<wikijson;
+		std::clog<<"Finished output."<<std::endl;
 	}catch(const curlpp::RuntimeError &e){
 		std::cerr<<e.what()<<std::endl;
 	}catch(const curlpp::LogicError &e){
