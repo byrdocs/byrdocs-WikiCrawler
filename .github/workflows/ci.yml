@@ -1,0 +1,32 @@
+name: Build and run traversal
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  schedule:
+    - cron: '0 0 * * *'
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+    - name: Set up C++ environment
+      run: |
+        sudo apt update
+        sudo apt install -y g++ make cmake curl libcurl4-openssl-dev
+    - name: Install dependencies
+      run: |
+        sudo apt install -y libcurlpp-dev libjsoncpp-dev
+    - name: Compile traversal
+      run: |
+        mkdir build
+        cd build
+        cmake ..
+        make traversal
+    - name: Run traversal
+      run: |
+        traversal
