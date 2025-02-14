@@ -29,4 +29,4 @@ jobs:
         make traversal
     - name: Run traversal
       run: |
-        traversal
+        ./build/traversal
