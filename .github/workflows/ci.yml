@@ -17,7 +17,7 @@ jobs:
     - name: Set up C++ environment
       run: |
         sudo apt update
-        sudo apt install -y g++ make cmake curl libcurl4-openssl-dev
+        sudo apt install -y g++ gdb make cmake curl libcurl4-openssl-dev
     - name: Install dependencies
       run: |
         sudo apt install -y libcurlpp-dev nlohmann-json3-dev
@@ -37,5 +37,6 @@ jobs:
     - name: Setup tmate session
       if: ${{ failure() }}
       uses: mxschmitt/action-tmate@v3
+      timeout-minutes: 30
       with:
         limit-access-to-actor: true
