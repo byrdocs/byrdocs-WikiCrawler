@@ -28,10 +28,16 @@ jobs:
         cmake -DCMAKE_BUILD_TYPE=Debug ..
         make
     - name: Test
+      shell: bash
+      env:
+        WIKITOKEN: ${{ secrets.WIKITOKEN }}
       run: |
         cd build
         ctest
     - name: Run traversal
+      shell: bash
+      env:
+        WIKITOKEN: ${{ secrets.WIKITOKEN }}
       run: |
         ./build/traversal
     - name: Setup tmate session
