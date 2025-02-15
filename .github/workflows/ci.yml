@@ -29,6 +29,7 @@ jobs:
         make
     - name: Test
       run: |
+        cd build
         ctest
     - name: Run traversal
       run: |
