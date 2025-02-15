@@ -21,12 +21,15 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt install -y libcurlpp-dev nlohmann-json3-dev
-    - name: Compile traversal
+    - name: Compile
       run: |
         mkdir build
         cd build
         cmake ..
-        make traversal
+        make
+    - name: Test
+      run: |
+        ctest
     - name: Run traversal
       run: |
         ./build/traversal
