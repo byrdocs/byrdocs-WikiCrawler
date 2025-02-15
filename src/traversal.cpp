@@ -11,7 +11,7 @@ int main(){
 		if(!jsonout.is_open())
 			throw std::runtime_error{"Cannot open wiki.json!"};
 		std::clog<<"Opened wiki.json..."<<std::endl;
-		const std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("wikitoken"))};
+		const std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("WIKITOKEN"))};
 		nlohmann::json allpages=wiki::query_all("https://wiki.byrdocs.org/api.php?action=query&list=allpages","apcontinue",{"query","allpages"},header);
 		nlohmann::json wikijson;
 		for(const auto &item:allpages){

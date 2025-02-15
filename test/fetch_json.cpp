@@ -8,7 +8,7 @@
 #include"wikibot.hpp"
 int main(){
 	try{
-		std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("wikitoken"))};
+		std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("WIKITOKEN"))};
 		std::string raw{wiki::view("https://wiki.byrdocs.org/api.php?format=json&action=query&pageids=1",header)};
 		nlohmann::json j=nlohmann::json::parse(raw);
 		nlohmann::json expectation{
