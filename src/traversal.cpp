@@ -6,11 +6,11 @@
 #include<nlohmann/json.hpp>
 #include"wikibot.hpp"
 int main(){
-	std::ofstream jsonout{"./wiki.json"};
+	std::ofstream jsonout{"./output/wiki.json"};
 	try{
 		if(!jsonout.is_open())
-			throw std::runtime_error{"Cannot open wiki.json!"};
-		std::clog<<"Opened wiki.json..."<<std::endl;
+			throw std::runtime_error{"Cannot open output/wiki.json!"};
+		std::clog<<"Opened output/wiki.json..."<<std::endl;
 		const std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("WIKITOKEN"))};
 		nlohmann::json allpages=wiki::query_all("https://wiki.byrdocs.org/api.php?action=query&list=allpages","apcontinue",{"query","allpages"},header);
 		nlohmann::json wikijson;

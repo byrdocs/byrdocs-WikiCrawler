@@ -23,9 +23,9 @@ jobs:
         sudo apt install -y libcurlpp-dev nlohmann-json3-dev
     - name: Compile
       run: |
-        mkdir build
+        mkdir -p build
         cd build
-        cmake -DCMAKE_BUILD_TYPE=Debug ..
+        cmake -DCMAKE_BUILD_TYPE=Release ..
         make
     - name: Test
       shell: bash
@@ -39,6 +39,7 @@ jobs:
       env:
         WIKITOKEN: ${{ secrets.WIKITOKEN }}
       run: |
+        mkdir output
         ./build/traversal
     - name: Setup tmate session
       if: ${{ failure() }}
@@ -46,3 +47,12 @@ jobs:
       timeout-minutes: 30
       with:
         limit-access-to-actor: true
+    - name: Upload to R2
+      uses: ryand56/r2-upload-action@latest
+      with:
+        r2-account-id: ${{ secrets.R2_ACCOUNT_ID }}
+        r2-access-key-id: ${{ secrets.R2_ACCESS_KEY_ID }}
+        r2-secret-access-key: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+        r2-bucket: ${{ vars.R2_BUCKET }}
+        source-dir: output/
+        destination-dir: ./
