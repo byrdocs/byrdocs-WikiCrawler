@@ -81,10 +81,10 @@ int main(){
 				wikipage+={"id",page_content.substr(source_idx+9,32)};
 			if(wikipage["data"]["college"].empty())
 				wikipage["data"].erase("college");
-			if(!comma){
-				jsonout<<',';
+			if(!comma)
 				comma=true;
-			}
+			else
+				jsonout<<',';
 			jsonout<<wikipage;
 			std::clog<<"Added."<<std::endl;
 		}
