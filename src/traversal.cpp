@@ -1,3 +1,4 @@
+#include<filesystem>
 #include<format>
 #include<fstream>
 #include<iostream>
@@ -6,14 +7,16 @@
 #include<nlohmann/json.hpp>
 #include"wikibot.hpp"
 int main(){
-	std::ofstream jsonout{"./output/wiki.json"};
 	try{
+		std::filesystem::create_directory("./output");
+		std::ofstream jsonout{"./output/wiki.json"};
 		if(!jsonout.is_open())
 			throw std::runtime_error{"Cannot open output/wiki.json!"};
 		std::clog<<"Opened output/wiki.json..."<<std::endl;
 		const std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("WIKITOKEN"))};
 		nlohmann::json allpages=wiki::query_all("https://wiki.byrdocs.org/api.php?action=query&list=allpages","apcontinue",{"query","allpages"},header);
-		nlohmann::json wikijson;
+		jsonout<<"[";
+		bool comma=false;
 		for(const auto &item:allpages){
 			const std::string pageid=nlohmann::to_string(item["pageid"]);
 			const std::string title=nlohmann::json::parse(wiki::view(std::format(
@@ -65,6 +68,10 @@ int main(){
 				else if(title.find(info.substr(7))!=std::string::npos)
 					wikipage["data"]["course"]["name"]=info.substr(7);
 			}
+			if(wikipage["data"]["course"]["name"]==""){
+				std::clog<<"Passed."<<std::endl;
+				continue;
+			}
 			const std::string page_content=wiki::view(std::format(
 				"https://wiki.byrdocs.org/index.php?title={}&action=raw",
 				title
@@ -72,12 +79,18 @@ int main(){
 			const auto source_idx=page_content.find("{{来源|");
 			if(source_idx!=std::string::npos)
 				wikipage+={"id",page_content.substr(source_idx+9,32)};
-			if(wikipage["data"]["course"]["name"]!="")
-				wikijson+=wikipage;
+			if(wikipage["data"]["college"].empty())
+				wikipage["data"].erase("college");
+			if(!comma){
+				jsonout<<',';
+				comma=true;
+			}
+			jsonout<<wikipage;
 			std::clog<<"Added."<<std::endl;
 		}
-		jsonout<<wikijson;
+		jsonout<<"]";
 		std::clog<<"Finished output."<<std::endl;
+		jsonout.close();
 	}catch(const curlpp::RuntimeError &e){
 		std::cerr<<e.what()<<std::endl;
 	}catch(const curlpp::LogicError &e){
@@ -85,6 +98,5 @@ int main(){
 	}catch(const std::exception &e){
 		std::cerr<<e.what()<<std::endl;
 	}
-	jsonout.close();
 	return 0;
 }
