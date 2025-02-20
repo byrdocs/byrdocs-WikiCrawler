@@ -50,7 +50,10 @@ void add_page(const nlohmann::json &item,const std::list<std::string> &header,st
 		else if(info=="分类:期末")
 			wikipage["data"]["time"]["stage"]="期末";
 		else if(info.ends_with("学院"))
-			wikipage["data"]["college"]+=info.substr(7);
+			if(info=="分类:计算机学院")
+				wikipage["data"]["college"]+="计算机学院（国家示范性软件学院）";
+			else
+				wikipage["data"]["college"]+=info.substr(7);
 		else if(info=="分类:有完整答案")
 			wikipage["data"]["content"]+="答案";
 		else if(info=="分类:本科课程")
