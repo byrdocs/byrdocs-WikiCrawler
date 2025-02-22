@@ -94,20 +94,24 @@ int main(){
 		nlohmann::json allpages=wiki::query_all("https://wiki.byrdocs.org/api.php?action=query&list=allpages","apcontinue",{"query","allpages"},header);
 		jsonout<<"[";
 		bool comma=false;
-		std::vector<std::thread> threads;
+		//std::vector<std::thread> threads;
 		for(const nlohmann::json &item:allpages)
-			threads.emplace_back(add_page,item,header,std::ref(jsonout),std::ref(comma));
-		for(std::thread &t:threads)
-			t.join();
+			add_page(item,header,jsonout,comma);
+		//	threads.emplace_back(add_page,item,header,std::ref(jsonout),std::ref(comma));
+		//for(std::thread &t:threads)
+		//	t.join();
 		jsonout<<"]";
 		std::clog<<"Finished output."<<std::endl;
 		jsonout.close();
 	}catch(const curlpp::RuntimeError &e){
 		std::cerr<<e.what()<<std::endl;
+		return 1;
 	}catch(const curlpp::LogicError &e){
 		std::cerr<<e.what()<<std::endl;
+		return 1;
 	}catch(const std::exception &e){
 		std::cerr<<e.what()<<std::endl;
+		return 1;
 	}
 	return 0;
 }
