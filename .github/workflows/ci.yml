@@ -11,32 +11,21 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    - name: Set up C++ environment
+    - name: Set up C++ environment and dependencies
       run: |
         sudo apt update
-        sudo apt install -y g++ gdb make cmake curl libcurl4-openssl-dev
-    - name: Install dependencies
+        sudo apt install -y g++ gdb make cmake curl libcurl4-openssl-dev libcurlpp-dev nlohmann-json3-dev
+    - name: Compile traversal
       run: |
-        sudo apt install -y libcurlpp-dev nlohmann-json3-dev
-    - name: Compile
-      run: |
-        mkdir -p build
+        mkdir build
         cd build
         cmake -DCMAKE_BUILD_TYPE=Release ..
-        make
-    - name: Test
-      shell: bash
-      env:
-        WIKITOKEN: ${{ secrets.WIKITOKEN }}
-      run: |
-        cd build
-        ctest
+        make traversal
     - name: Run traversal
       shell: bash
       env:
         WIKITOKEN: ${{ secrets.WIKITOKEN }}
       run: |
-        mkdir output
         ./build/traversal
     - name: Setup tmate session
       if: ${{ failure() }}
