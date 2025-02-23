@@ -9,7 +9,8 @@
 #include<vector>
 #include<nlohmann/json.hpp>
 #include"wikibot.hpp"
-void add_page(const nlohmann::json &item,const std::list<std::string> &header,std::ofstream &jsonout,bool &comma){
+std::mutex mutex;
+void add_page(const nlohmann::json &item,const std::list<std::string> &header,nlohmann::json &wikijson){
 	const std::string pageid=nlohmann::to_string(item["pageid"]);
 	const std::string title=nlohmann::json::parse(wiki::view(std::format(
 		"https://wiki.byrdocs.org/api.php?format=json&action=query&pageids={}",
@@ -76,11 +77,9 @@ void add_page(const nlohmann::json &item,const std::list<std::string> &header,st
 		wikipage+={"id",page_content.substr(source_idx+9,32)};
 	if(wikipage["data"]["college"].empty())
 		wikipage["data"].erase("college");
-	if(!comma)
-		comma=true;
-	else
-		jsonout<<',';
-	jsonout<<wikipage;
+	mutex.lock();
+	wikijson+=wikipage;
+	mutex.unlock();
 	std::clog<<std::format("Added {}.",title)<<std::endl;
 }
 int main(){
@@ -92,15 +91,13 @@ int main(){
 		std::clog<<"Opened output/wiki.json..."<<std::endl;
 		const std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("WIKITOKEN"))};
 		nlohmann::json allpages=wiki::query_all("https://wiki.byrdocs.org/api.php?action=query&list=allpages","apcontinue",{"query","allpages"},header);
-		jsonout<<"[";
-		bool comma=false;
-		//std::vector<std::thread> threads;
+		nlohmann::json wikijson;
+		std::vector<std::thread> threads;
 		for(const nlohmann::json &item:allpages)
-			add_page(item,header,jsonout,comma);
-		//	threads.emplace_back(add_page,item,header,std::ref(jsonout),std::ref(comma));
-		//for(std::thread &t:threads)
-		//	t.join();
-		jsonout<<"]";
+			threads.emplace_back(add_page,item,header,std::ref(wikijson));
+		for(std::thread &t:threads)
+			t.join();
+		jsonout<<wikijson;
 		std::clog<<"Finished output."<<std::endl;
 		jsonout.close();
 	}catch(const curlpp::RuntimeError &e){
