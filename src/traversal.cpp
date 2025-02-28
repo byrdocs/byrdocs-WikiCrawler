@@ -84,11 +84,7 @@ void add_page(const nlohmann::json &item,const std::list<std::string> &header,nl
 }
 int main(){
 	try{
-		std::filesystem::create_directory("./output");
-		std::ofstream jsonout{"./output/wiki.json"};
-		if(!jsonout.is_open())
-			throw std::runtime_error{"Cannot open output/wiki.json!"};
-		std::clog<<"Opened output/wiki.json..."<<std::endl;
+		std::clog<<"Started traversal..."<<std::endl;
 		const std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("WIKITOKEN"))};
 		nlohmann::json allpages=wiki::query_all("https://wiki.byrdocs.org/api.php?action=query&list=allpages","apcontinue",{"query","allpages"},header);
 		nlohmann::json wikijson;
@@ -97,6 +93,11 @@ int main(){
 			threads.emplace_back(add_page,item,header,std::ref(wikijson));
 		for(std::thread &t:threads)
 			t.join();
+		std::filesystem::create_directory("./output");
+		std::ofstream jsonout{"./output/wiki.json"};
+		if(!jsonout.is_open())
+			throw std::runtime_error{"Error: Cannot open output/wiki.json!"};
+		std::clog<<"Opened output/wiki.json"<<std::endl;
 		jsonout<<wikijson;
 		std::clog<<"Finished output."<<std::endl;
 		jsonout.close();
