@@ -6,6 +6,7 @@
 #include<curlpp/Options.hpp>
 #include<nlohmann/json.hpp>
 #include"wikibot.hpp"
+constexpr unsigned curl_retry{5};
 std::string wiki::view(const std::string &url){
 	curlpp::Easy request;
 	request.setOpt<curlpp::options::Url>(url);
@@ -23,11 +24,30 @@ std::string wiki::view(const std::string &url,const std::list<std::string> &head
 	request.perform();
 	return response.str();
 }
+nlohmann::json wiki::view_json(const std::string &url){
+	unsigned retry=0;
+	std::string str;
+	while(str==""){
+		if(retry>=curl_retry)
+			throw std::invalid_argument(std::format("Failed to view `{}` for {} times! Got empty content.",url,curl_retry));
+		retry++;
+		str=wiki::view(url);
+	}
+	return nlohmann::json::parse(str);
+}
+nlohmann::json wiki::view_json(const std::string &url,const std::list<std::string> &header){
+	unsigned retry=0;
+	std::string str;
+	while(str==""){
+		if(retry>=curl_retry)
+			throw std::invalid_argument(std::format("Failed to view `{}` for {} times! Got empty content.",url,curl_retry));
+		retry++;
+		str=wiki::view(url,header);
+	}
+	return nlohmann::json::parse(str);
+}
 nlohmann::json wiki::query_all(const std::string &query_prefix,const std::string &continuekey,const std::vector<std::string> &merge_key_series){
-	nlohmann::json result,current=nlohmann::json::parse(wiki::view(std::format(
-		"{}&format=json&formatrevision=2",
-		query_prefix
-	)));
+	nlohmann::json result,current=wiki::view_json(std::format("{}&format=json",query_prefix));
 	while(true){
 		const bool ending=current.find("continue")==current.end();
 		std::string continuevalue{};
@@ -39,20 +59,20 @@ nlohmann::json wiki::query_all(const std::string &query_prefix,const std::string
 			result.push_back(item);
 		if(ending)
 			break;
-		current=nlohmann::json::parse(wiki::view(std::format(
-				"{}&format=json&formatrevision=2&{}={}",
+		current=wiki::view_json(std::format(
+				"{}&format=json&{}={}",
 				query_prefix,
 				continuekey,
 				continuevalue
-		)));
+		));
 	}
 	return result;
 }
 nlohmann::json wiki::query_all(const std::string &query_prefix,const std::string &continuekey,const std::vector<std::string> &merge_key_series,const std::list<std::string> &header){
-	nlohmann::json result,current=nlohmann::json::parse(wiki::view(std::format(
-		"{}&format=json&formatrevision=2",
+	nlohmann::json result,current=wiki::view_json(std::format(
+		"{}&format=json",
 		query_prefix
-	),header));
+	),header);
 	while(true){
 		const bool ending=current.find("continue")==current.end();
 		std::string continuevalue{};
@@ -64,12 +84,12 @@ nlohmann::json wiki::query_all(const std::string &query_prefix,const std::string
 			result.push_back(item);
 		if(ending)
 			break;
-		current=nlohmann::json::parse(wiki::view(std::format(
-				"{}&format=json&formatrevision=2&{}={}",
+		current=wiki::view_json(std::format(
+				"{}&format=json&{}={}",
 				query_prefix,
 				continuekey,
 				continuevalue
-		),header));
+		),header);
 	}
 	return result;
 }

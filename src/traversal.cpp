@@ -1,3 +1,4 @@
+#include<exception>
 #include<filesystem>
 #include<format>
 #include<fstream>
@@ -10,15 +11,16 @@
 #include<nlohmann/json.hpp>
 #include"wikibot.hpp"
 std::mutex mutex;
-void add_page(const nlohmann::json &item,const std::list<std::string> &header,nlohmann::json &wikijson){
+void add_page(const nlohmann::json &item,const std::list<std::string> &header,std::size_t &pages_added,const std::size_t &pages_total,nlohmann::json &wikijson){
 	const std::string pageid=nlohmann::to_string(item["pageid"]);
-	const std::string title=nlohmann::json::parse(wiki::view(std::format(
-		"https://wiki.byrdocs.org/api.php?format=json&action=query&pageids={}",
-		pageid
-	),header))["query"]["pages"][pageid]["title"];
-	std::clog<<std::format("Started processing {}... ",title)<<std::endl;
+	const std::string title=wiki::view_json(
+		std::format("https://wiki.byrdocs.org/api.php?format=json&action=query&pageids={}",pageid),header
+	)["query"]["pages"][pageid]["title"];
+	mutex.lock();
+	std::clog<<std::format("[{}/{}] Processing {}... ",pages_added,pages_total,title)<<std::endl;
+	mutex.unlock();
 	nlohmann::json categories=wiki::query_all(std::format(
-		"https://wiki.byrdocs.org/api.php?action=query&prop=categories&&pageids={}",
+		"https://wiki.byrdocs.org/api.php?action=query&prop=categories&pageids={}",
 		pageid
 	),"clcontinue",{"query","pages",pageid,"categories"},header);
 	nlohmann::json wikipage{
@@ -65,7 +67,10 @@ void add_page(const nlohmann::json &item,const std::list<std::string> &header,nl
 			wikipage["data"]["course"]["name"]=info.substr(7);
 	}
 	if(wikipage["data"]["course"]["name"]==""){
-		std::clog<<std::format("Passed {}.",title)<<std::endl;
+		mutex.lock();
+		pages_added++;
+		std::clog<<std::format("[{}/{}] Passed {}.",pages_added,pages_total,title)<<std::endl;
+		mutex.unlock();
 		return;
 	}
 	const std::string page_content=wiki::view(std::format(
@@ -79,18 +84,21 @@ void add_page(const nlohmann::json &item,const std::list<std::string> &header,nl
 		wikipage["data"].erase("college");
 	mutex.lock();
 	wikijson+=wikipage;
+	pages_added++;
+	std::clog<<std::format("[{}/{}] Added {}.",pages_added,pages_total,title)<<std::endl;
 	mutex.unlock();
-	std::clog<<std::format("Added {}.",title)<<std::endl;
 }
 int main(){
 	try{
-		std::clog<<"Started traversal..."<<std::endl;
+		std::clog<<"Querying pages info..."<<std::endl;
 		const std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("WIKITOKEN"))};
 		nlohmann::json allpages=wiki::query_all("https://wiki.byrdocs.org/api.php?action=query&list=allpages","apcontinue",{"query","allpages"},header);
+		std::clog<<"Started processing pages..."<<std::endl;
 		nlohmann::json wikijson;
 		std::vector<std::thread> threads;
+		std::size_t pages_added{0};
 		for(const nlohmann::json &item:allpages)
-			threads.emplace_back(add_page,item,header,std::ref(wikijson));
+			threads.emplace_back(add_page,item,header,std::ref(pages_added),allpages.size(),std::ref(wikijson));
 		for(std::thread &t:threads)
 			t.join();
 		std::filesystem::create_directory("./output");
