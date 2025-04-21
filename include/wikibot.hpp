@@ -4,10 +4,15 @@
 #include<curlpp/Easy.hpp>
 #include<nlohmann/json.hpp>
 namespace wiki{
-std::string view(const std::string &url);
-std::string view(const std::string &url,const std::list<std::string> &header);
-nlohmann::json view_json(const std::string &url);
-nlohmann::json view_json(const std::string &url,const std::list<std::string> &header);
-nlohmann::json query_all(const std::string &query_prefix,const std::string &continuekey,const std::vector<std::string> &merge_key_series);
-nlohmann::json query_all(const std::string &query_prefix,const std::string &continuekey,const std::vector<std::string> &merge_key_series,const std::list<std::string> &header);
+std::string get(curlpp::Easy &request);
+std::string raw(const std::string &api,const std::string &title);
+std::string raw(const std::string &api,const std::list<std::string> &header,const std::string &title);
+void init_request(curlpp::Easy &request,const std::string &url,const std::map<std::string,std::string> &formstr);
+void init_request(curlpp::Easy &request,const std::string &url,const std::list<std::string> &header,const std::map<std::string,std::string> &formstr);
+nlohmann::json query_all_pages(const std::string &api);
+nlohmann::json query_all_pages(const std::string &api,const std::list<std::string> &header);
+std::string query_title(const std::string &api,const std::string &pageid);
+std::string query_title(const std::string &api,const std::list<std::string> &header,const std::string &pageid);
+nlohmann::json query_all_categories(const std::string &api,const std::string &pageid);
+nlohmann::json query_all_categories(const std::string &api,const std::list<std::string> &header,const std::string &pageid);
 }

@@ -11,18 +11,14 @@
 #include<nlohmann/json.hpp>
 #include"wikibot.hpp"
 std::mutex mutex;
+const std::string API{"https://wiki.byrdocs.org/api.php"};
 void add_page(const nlohmann::json &item,const std::list<std::string> &header,std::size_t &pages_added,const std::size_t &pages_total,nlohmann::json &wikijson){
 	const std::string pageid=nlohmann::to_string(item["pageid"]);
-	const std::string title=wiki::view_json(
-		std::format("https://wiki.byrdocs.org/api.php?format=json&action=query&pageids={}",pageid),header
-	)["query"]["pages"][pageid]["title"];
+	const std::string title=wiki::query_title(API,header,pageid);
 	mutex.lock();
 	std::clog<<std::format("[{}/{}] Processing {}... ",pages_added,pages_total,title)<<std::endl;
 	mutex.unlock();
-	nlohmann::json categories=wiki::query_all(std::format(
-		"https://wiki.byrdocs.org/api.php?action=query&prop=categories&pageids={}",
-		pageid
-	),"clcontinue",{"query","pages",pageid,"categories"},header);
+	nlohmann::json categories=wiki::query_all_categories(API,header,pageid);
 	nlohmann::json wikipage{
 		{"url",std::format("https://wiki.byrdocs.org/w/{}",title)},
 		{"type","test"},
@@ -73,10 +69,7 @@ void add_page(const nlohmann::json &item,const std::list<std::string> &header,st
 		mutex.unlock();
 		return;
 	}
-	const std::string page_content=wiki::view(std::format(
-		"https://wiki.byrdocs.org/index.php?title={}&action=raw",
-		title
-	),header);
+	const std::string page_content=wiki::raw(API,header,title);
 	const auto source_idx=page_content.find("{{来源|");
 	if(source_idx!=std::string::npos)
 		wikipage+={"id",page_content.substr(source_idx+9,32)};
@@ -90,9 +83,10 @@ void add_page(const nlohmann::json &item,const std::list<std::string> &header,st
 }
 int main(){
 	try{
-		std::clog<<"Querying pages info..."<<std::endl;
+		std::clog<<"Querying pages info...";
 		const std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("WIKITOKEN"))};
-		nlohmann::json allpages=wiki::query_all("https://wiki.byrdocs.org/api.php?action=query&list=allpages","apcontinue",{"query","allpages"},header);
+		nlohmann::json allpages=wiki::query_all_pages(API,header);
+		std::clog<<std::format(" Fetched {} pages.",allpages.size())<<std::endl;
 		std::clog<<"Started processing pages..."<<std::endl;
 		nlohmann::json wikijson;
 		std::vector<std::thread> threads;
