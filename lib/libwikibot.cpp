@@ -13,33 +13,17 @@ std::string wiki::get(curlpp::Easy &request){
 	request.perform();
 	return response.str();
 }
-std::string wiki::raw(const std::string &api,const std::string &title){
+std::string wiki::raw(const std::string &api,const std::string &title,const std::list<std::string> &header){
 	curlpp::Easy request;
 	init_request(
 		request,
 		api,
-		{{"title",title},{"action","raw"}}
+		{{"title",title},{"action","raw"}},
+		header
 	);
 	return get(request);
 }
-std::string wiki::raw(const std::string &api,const std::list<std::string> &header,const std::string &title){
-	curlpp::Easy request;
-	init_request(
-		request,
-		api,
-		header,
-		{{"title",title},{"action","raw"}}
-	);
-	return get(request);
-}
-void wiki::init_request(curlpp::Easy &request,const std::string &url,const std::map<std::string,std::string> &formstr){
-	request.setOpt<curlpp::Options::Url>(url);
-	curlpp::Forms form;
-	for(const auto &it:formstr)
-		form.push_back(new curlpp::FormParts::Content(it.first,it.second));
-	request.setOpt<curlpp::Options::HttpPost>(form);
-}
-void wiki::init_request(curlpp::Easy &request,const std::string &url,const std::list<std::string> &header,const std::map<std::string,std::string> &formstr){
+void wiki::init_request(curlpp::Easy &request,const std::string &url,const std::map<std::string,std::string> &formstr,const std::list<std::string> &header){
 	request.setOpt<curlpp::Options::Url>(url);
 	request.setOpt<curlpp::Options::HttpHeader>(header);
 	curlpp::Forms form;
@@ -47,38 +31,14 @@ void wiki::init_request(curlpp::Easy &request,const std::string &url,const std::
 		form.push_back(new curlpp::FormParts::Content(it.first,it.second));
 	request.setOpt<curlpp::Options::HttpPost>(form);
 }
-nlohmann::json wiki::query_all_pages(const std::string &api){
-	curlpp::Easy request;
-	init_request(
-		request,
-		api+"?format=json",
-		{{"action","query"},{"list","allpages"}}
-	);
-	nlohmann::json current=nlohmann::json::parse(wiki::get(request)),result;
-	while(true){
-		const bool ending=current.find("continue")==current.end();
-		for(const auto &item:current["query"]["allpages"])
-			result.push_back(item);
-		if(ending)
-			break;
-		curlpp::Easy request;
-		init_request(
-			request,
-			api+"?format=json",
-			{{"action","query"},{"list","allpages"},{"apcontinue",current["continue"]["apcontinue"]}}
-		);
-		current=nlohmann::json::parse(wiki::get(request));
-	}
-	return result;
-}
 nlohmann::json wiki::query_all_pages(const std::string &api,const std::list<std::string> &header){
 	nlohmann::json result;
 	curlpp::Easy request;
 	init_request(
 		request,
 		api+"?format=json",
-		header,
-		{{"action","query"},{"list","allpages"}}
+		{{"action","query"},{"list","allpages"}},
+		header
 	);
 	nlohmann::json current=nlohmann::json::parse(wiki::get(request));
 	while(true){
@@ -91,41 +51,32 @@ nlohmann::json wiki::query_all_pages(const std::string &api,const std::list<std:
 		init_request(
 			request,
 			api+"?format=json",
-			header,
-			{{"action","query"},{"list","allpages"},{"apcontinue",current["continue"]["apcontinue"]}}
+			{{"action","query"},{"list","allpages"},{"apcontinue",current["continue"]["apcontinue"]}},
+			header
 		);
 		current=nlohmann::json::parse(wiki::get(request));
 	}
 	return result;
 }
-std::string wiki::query_title(const std::string &api,const std::string &pageid){
+std::string wiki::query_title(const std::string &api,const std::string &pageid,const std::list<std::string> &header){
 	curlpp::Easy request;
 	init_request(
 		request,
 		api+"?format=json",
-		{{"action","query"},{"pageids",pageid}}
+		{{"action","query"},{"pageids",pageid}},
+		header
 	);
 	nlohmann::json result=nlohmann::json::parse(wiki::get(request));
 	return result["query"]["pages"][pageid]["title"];
 }
-std::string wiki::query_title(const std::string &api,const std::list<std::string> &header,const std::string &pageid){
-	curlpp::Easy request;
-	init_request(
-		request,
-		api+"?format=json",
-		header,
-		{{"action","query"},{"pageids",pageid}}
-	);
-	nlohmann::json result=nlohmann::json::parse(wiki::get(request));
-	return result["query"]["pages"][pageid]["title"];
-}
-nlohmann::json wiki::query_all_categories(const std::string &api,const std::string &pageid){
+nlohmann::json wiki::query_all_categories(const std::string &api,const std::string &pageid,const std::list<std::string> &header){
 	nlohmann::json result;
 	curlpp::Easy request;
 	init_request(
 		request,
 		api+"?format=json",
-		{{"action","query"},{"prop","categories"},{"pageids",pageid}}
+		{{"action","query"},{"prop","categories"},{"pageids",pageid}},
+		header
 	);
 	nlohmann::json current=nlohmann::json::parse(wiki::get(request));
 	while(true){
@@ -139,35 +90,8 @@ nlohmann::json wiki::query_all_categories(const std::string &api,const std::stri
 		init_request(
 			request,
 			api+"?format=json",
-			{{"action","query"},{"prop","categories"},{"pageids",pageid},{"clcontinue",current["continue"]["clcontinue"]}}
-		);
-		current=nlohmann::json::parse(wiki::get(request));
-	}
-	return result;
-}
-nlohmann::json wiki::query_all_categories(const std::string &api,const std::list<std::string> &header,const std::string &pageid){
-	nlohmann::json result;
-	curlpp::Easy request;
-	init_request(
-		request,
-		api+"?format=json",
-		header,
-		{{"action","query"},{"prop","categories"},{"pageids",pageid}}
-	);
-	nlohmann::json current=nlohmann::json::parse(wiki::get(request));
-	while(true){
-		const bool ending=current.find("continue")==current.end();
-		for(const auto &item:current["query"]["pages"][pageid]["categories"])
-			result.push_back(item);
-		if(ending)
-			break;
-		std::string continuevalue{current["continue"]["clcontinue"]};
-		curlpp::Easy request;
-		init_request(
-			request,
-			api+"?format=json",
-			header,
-			{{"action","query"},{"prop","categories"},{"pageids",pageid},{"clcontinue",current["continue"]["clcontinue"]}}
+			{{"action","query"},{"prop","categories"},{"pageids",pageid},{"clcontinue",current["continue"]["clcontinue"]}},
+			header
 		);
 		current=nlohmann::json::parse(wiki::get(request));
 	}

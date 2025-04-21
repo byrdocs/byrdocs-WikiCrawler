@@ -21,8 +21,8 @@ R"(:'''此页面'''仅供 ''API'' 进行测试，请勿轻易修改其中内容�
 		wiki::init_request(
 			request,
 			"https://wiki.byrdocs.org/index.php?",
-			header,
-			{{"title","用户:大量更改机器人/沙盒/Api_View"},{"action","raw"}}
+			{{"title","用户:大量更改机器人/沙盒/Api_View"},{"action","raw"}},
+			header
 		);
 		std::string result{wiki::get(request)};
 		std::clog<<result<<std::endl;

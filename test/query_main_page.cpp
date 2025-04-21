@@ -16,8 +16,8 @@ int main(){
 		wiki::init_request(
 			request,
 			"https://wiki.byrdocs.org/api.php?format=json",
-			header,
-			{{"action","query"},{"pageids","1"}}
+			{{"action","query"},{"pageids","1"}},
+			header
 		);
 		std::string raw{wiki::get(request)};
 		std::clog<<raw<<std::endl;
