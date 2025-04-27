@@ -16,7 +16,7 @@ void add_page(const nlohmann::json &item,const std::list<std::string> &header,st
 	const std::string pageid=nlohmann::to_string(item["pageid"]);
 	const std::string title=wiki::query_title(API,pageid,header);
 	mutex.lock();
-	std::clog<<std::format("[{}/{}] Processing {}... ",pages_added,pages_total,title)<<std::endl;
+	std::clog<<std::format("[{}/{}] Processing {}...",pages_added,pages_total,title)<<std::endl;
 	mutex.unlock();
 	nlohmann::json categories=wiki::query_all_categories(API,pageid,header);
 	nlohmann::json wikipage{
