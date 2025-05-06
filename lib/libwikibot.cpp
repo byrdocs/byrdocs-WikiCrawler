@@ -13,11 +13,11 @@ std::string wiki::get(curlpp::Easy &request){
 	request.perform();
 	return response.str();
 }
-std::string wiki::raw(const std::string &api,const std::string &title,const std::list<std::string> &header){
+std::string wiki::raw(const std::string &index,const std::string &title,const std::list<std::string> &header){
 	curlpp::Easy request;
 	init_request(
 		request,
-		api,
+		index,
 		{{"title",title},{"action","raw"}},
 		header
 	);

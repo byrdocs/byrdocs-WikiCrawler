@@ -12,6 +12,7 @@
 #include"wikibot.hpp"
 std::mutex mutex;
 const std::string API{"https://wiki.byrdocs.org/api.php"};
+const std::string INDEX{"https://wiki.byrdocs.org/index.php"};
 void add_page(const nlohmann::json &item,const std::list<std::string> &header,std::size_t &pages_added,const std::size_t &pages_total,nlohmann::json &wikijson){
 	const std::string pageid=nlohmann::to_string(item["pageid"]);
 	const std::string title=wiki::query_title(API,pageid,header);
@@ -69,7 +70,7 @@ void add_page(const nlohmann::json &item,const std::list<std::string> &header,st
 		mutex.unlock();
 		return;
 	}
-	const std::string page_content=wiki::raw(API,title,header);
+	const std::string page_content=wiki::raw(INDEX,title,header);
 	const auto source_idx=page_content.find("{{来源|");
 	if(source_idx!=std::string::npos)
 		wikipage+={"id",page_content.substr(source_idx+9,32)};
