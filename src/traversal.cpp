@@ -14,7 +14,7 @@
 std::mutex mutex;
 const std::string API{"https://wiki.byrdocs.org/api.php"};
 const std::string INDEX{"https://wiki.byrdocs.org/index.php"};
-void add_page(const nlohmann::json &item,const std::list<std::string> &header,std::size_t &pages_added,const std::size_t &pages_total,nlohmann::json &wikijson){
+void add_page(const nlohmann::json &item,const std::list<std::string> &header,std::size_t &pages_added,std::size_t &pages_total,nlohmann::json &wikijson){
 	const std::string pageid=nlohmann::to_string(item["pageid"]);
 	const std::string title=wiki::query_title(API,pageid,header);
 	mutex.lock();
@@ -24,10 +24,12 @@ void add_page(const nlohmann::json &item,const std::list<std::string> &header,st
 	const std::string page_content=wiki::raw(INDEX,title,header);
 	nlohmann::json wikipage=page::gen_metadata(title,categories,page_content);
 	mutex.lock();
-	pages_added++;
-	if(wikipage.empty())
+	if(wikipage.empty()){
+		--pages_total;
 		std::clog<<std::format("[{}/{}] Passed {}.",pages_added,pages_total,title)<<std::endl;
+	}
 	else{
+		++pages_added;
 		wikijson+=wikipage;
 		std::clog<<std::format("[{}/{}] Added {}.",pages_added,pages_total,title)<<std::endl;
 	}
@@ -42,9 +44,9 @@ int main(){
 		std::clog<<"Started processing pages..."<<std::endl;
 		nlohmann::json wikijson;
 		std::vector<std::thread> threads;
-		std::size_t pages_added{0};
+		std::size_t pages_added{0},pages_total{allpages.size()};
 		for(const nlohmann::json &item:allpages)
-			threads.emplace_back(add_page,item,header,std::ref(pages_added),allpages.size(),std::ref(wikijson));
+			threads.emplace_back(add_page,item,header,std::ref(pages_added),std::ref(pages_total),std::ref(wikijson));
 		for(std::thread &t:threads)
 			t.join();
 		std::filesystem::create_directory("./output");
@@ -53,7 +55,7 @@ int main(){
 			throw std::runtime_error{"Error: Cannot open output/wiki.json!"};
 		std::clog<<"Opened output/wiki.json"<<std::endl;
 		jsonout<<wikijson;
-		std::clog<<"Finished output."<<std::endl;
+		std::clog<<std::format("Finished output. {} pages added.",pages_total)<<std::endl;
 		jsonout.close();
 	}catch(const curlpp::RuntimeError &e){
 		std::cerr<<e.what()<<std::endl;
