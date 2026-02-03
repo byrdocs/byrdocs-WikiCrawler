@@ -25,6 +25,7 @@ jobs:
     - name: Run traversal
       shell: bash
       env:
+        WIKI_SITE_URL: ${{ secrets.WIKI_SITE_URL }}
         WIKI_SITE_TOKEN: ${{ secrets.WIKI_SITE_TOKEN }}
       run: |
         build/traversal
