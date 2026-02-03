@@ -15,7 +15,7 @@ extern std::string INDEX;
 nlohmann::json page::gen_metadata(const std::string &title,const nlohmann::json &categories,const std::string &page_content){
 	bool with_source{false};
 	nlohmann::json wikipage{
-		{"url",std::format("https://wiki.byrdocs.org/w/{}",title)},
+		{"url",std::format("{}/w/{}",std::getenv("WIKI_SITE_URL"),title)},
 		{"type","test"},
 		{"data",{
 			{"college",{}},

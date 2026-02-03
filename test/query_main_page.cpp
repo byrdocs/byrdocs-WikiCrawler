@@ -11,11 +11,11 @@
 #include"wikibot.hpp"
 int main(){
 	try{
-		std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("WIKITOKEN"))};
+		std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("WIKI_SITE_TOKEN"))};
 		curlpp::Easy request;
 		wiki::init_request(
 			request,
-			"https://wiki.byrdocs.org/api.php?format=json",
+			std::format("{}/api.php?format=json",std::getenv("WIKI_SITE_URL")),
 			{{"action","query"},{"pageids","1"}},
 			header
 		);

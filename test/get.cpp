@@ -16,11 +16,11 @@ R"(:'''此页面'''仅供 ''API'' 进行测试，请勿轻易修改其中内容�
 
 * [[首页|Main]])"};
 	try{
-		std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("WIKITOKEN"))};
+		std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("WIKI_SITE_TOKEN"))};
 		curlpp::Easy request;
 		wiki::init_request(
 			request,
-			"https://wiki.byrdocs.org/index.php?",
+			std::format("{}/index.php?",std::getenv("WIKI_SITE_URL")),
 			{{"title","用户:大量更改机器人/沙盒/Api_View"},{"action","raw"}},
 			header
 		);

@@ -12,8 +12,8 @@
 #include"wikibot.hpp"
 #include"page.hpp"
 std::mutex mutex;
-const std::string API{"https://wiki.byrdocs.org/api.php"};
-const std::string INDEX{"https://wiki.byrdocs.org/index.php"};
+const std::string API{std::format("{}/api.php",std::getenv("WIKI_SITE_URL"))};
+const std::string INDEX{std::format("{}/index.php",std::getenv("WIKI_SITE_URL"))};
 void add_page(const nlohmann::json &item,const std::list<std::string> &header,std::size_t &pages_added,std::size_t &pages_total,nlohmann::json &wikijson){
 	const std::string pageid=nlohmann::to_string(item["pageid"]);
 	const std::string title=wiki::query_title(API,pageid,header);
@@ -38,7 +38,7 @@ void add_page(const nlohmann::json &item,const std::list<std::string> &header,st
 int main(){
 	try{
 		std::clog<<"Querying pages info...";
-		const std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("WIKITOKEN"))};
+		const std::list<std::string> header{std::format("X-Byrdocs-Token:{}",std::getenv("WIKI_SITE_TOKEN"))};
 		nlohmann::json allpages=wiki::query_all_pages(API,header);
 		std::clog<<std::format(" Fetched {} pages.",allpages.size())<<std::endl;
 		std::clog<<"Started processing pages..."<<std::endl;
