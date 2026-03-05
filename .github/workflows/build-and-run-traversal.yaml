@@ -1,10 +1,8 @@
 name: Build and run traversal
 on:
-  push:
-    branches:
-      - master
   schedule:
     - cron: '0 18 * * *'
+  workflow_dispatch:
 jobs:
   build:
     runs-on: ubuntu-24.04
@@ -30,7 +28,7 @@ jobs:
       run: |
         build/traversal
     - name: Setup tmate session
-      if: ${{ failure() }}
+      #if: ${{ failure() }}
       uses: mxschmitt/action-tmate@v3
       timeout-minutes: 30
       with:
