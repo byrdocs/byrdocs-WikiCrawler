@@ -27,7 +27,7 @@ jobs:
         WIKI_SITE_URL: ${{ secrets.WIKI_SITE_URL }}
         WIKI_SITE_TOKEN: ${{ secrets.WIKI_SITE_TOKEN }}
       run: |
-        traversal
+        ./traversal
     - name: Setup tmate session
       if: ${{ failure() }}
       uses: mxschmitt/action-tmate@v3
