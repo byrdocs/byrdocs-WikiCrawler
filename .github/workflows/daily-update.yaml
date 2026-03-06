@@ -11,24 +11,25 @@ jobs:
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
-    - name: Set up C++ environment and dependencies
+    - name: Check traversal release
+      id: check
+      uses: pozetronic/github-action-get-latest-release@master
+      with:
+        owner: byrdocs
+        repo: byrdocs-WikiCrawler
+    - name: Download traversal
       run: |
-        sudo apt update
-        sudo apt install -y g++ make cmake curl libcurl4-openssl-dev libcurlpp-dev nlohmann-json3-dev
-    - name: Compile traversal
-      run: |
-        mkdir build
-        cmake -DCMAKE_BUILD_TYPE=Release -B build/ .
-        make -C build/ traversal
+        wget https://github.com/byrdocs/byrdocs-WikiCrawler/releases/download/${{ steps.check.outputs.release }}/traversal
+        chmod 777 traversal
     - name: Run traversal
       shell: bash
       env:
         WIKI_SITE_URL: ${{ secrets.WIKI_SITE_URL }}
         WIKI_SITE_TOKEN: ${{ secrets.WIKI_SITE_TOKEN }}
       run: |
-        build/traversal
+        traversal
     - name: Setup tmate session
-      #if: ${{ failure() }}
+      if: ${{ failure() }}
       uses: mxschmitt/action-tmate@v3
       timeout-minutes: 30
       with:
